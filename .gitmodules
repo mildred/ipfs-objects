@@ -1,0 +1,105 @@
+[submodule "src/github.com/agl/ed25519"]
+	path = src/github.com/agl/ed25519
+	url = git@github.com:agl/ed25519.git
+[submodule "src/github.com/coreos/go-semver"]
+	path = src/github.com/coreos/go-semver
+	url = git@github.com:coreos/go-semver.git
+[submodule "src/github.com/ipfs/go-cid"]
+	path = src/github.com/ipfs/go-cid
+	url = git@github.com:ipfs/go-cid.git
+[submodule "src/github.com/ipfs/go-datastore"]
+	path = src/github.com/ipfs/go-datastore
+	url = git@github.com:ipfs/go-datastore.git
+[submodule "src/github.com/ipfs/go-ipfs"]
+	path = src/github.com/ipfs/go-ipfs
+	url = git@github.com:ipfs/go-ipfs.git
+[submodule "src/github.com/ipfs/go-ipfs-util"]
+	path = src/github.com/ipfs/go-ipfs-util
+	url = git@github.com:ipfs/go-ipfs-util.git
+[submodule "src/github.com/ipfs/go-log"]
+	path = src/github.com/ipfs/go-log
+	url = git@github.com:ipfs/go-log.git
+[submodule "src/github.com/jbenet/go-base58"]
+	path = src/github.com/jbenet/go-base58
+	url = git@github.com:jbenet/go-base58.git
+[submodule "src/github.com/jbenet/goprocess"]
+	path = src/github.com/jbenet/goprocess
+	url = git@github.com:jbenet/goprocess.git
+[submodule "src/github.com/libp2p/go-libp2p-crypto"]
+	path = src/github.com/libp2p/go-libp2p-crypto
+	url = git@github.com:libp2p/go-libp2p-crypto.git
+[submodule "src/github.com/libp2p/go-libp2p-host"]
+	path = src/github.com/libp2p/go-libp2p-host
+	url = git@github.com:libp2p/go-libp2p-host.git
+[submodule "src/github.com/libp2p/go-libp2p-interface-conn"]
+	path = src/github.com/libp2p/go-libp2p-interface-conn
+	url = git@github.com:libp2p/go-libp2p-interface-conn.git
+[submodule "src/github.com/libp2p/go-libp2p-kad-dht"]
+	path = src/github.com/libp2p/go-libp2p-kad-dht
+	url = git@github.com:libp2p/go-libp2p-kad-dht.git
+[submodule "src/github.com/libp2p/go-libp2p-kbucket"]
+	path = src/github.com/libp2p/go-libp2p-kbucket
+	url = git@github.com:libp2p/go-libp2p-kbucket.git
+[submodule "src/github.com/libp2p/go-libp2p-loggables"]
+	path = src/github.com/libp2p/go-libp2p-loggables
+	url = git@github.com:libp2p/go-libp2p-loggables.git
+[submodule "src/github.com/libp2p/go-libp2p-net"]
+	path = src/github.com/libp2p/go-libp2p-net
+	url = git@github.com:libp2p/go-libp2p-net.git
+[submodule "src/github.com/libp2p/go-libp2p-peer"]
+	path = src/github.com/libp2p/go-libp2p-peer
+	url = git@github.com:libp2p/go-libp2p-peer.git
+[submodule "src/github.com/libp2p/go-libp2p-peerstore"]
+	path = src/github.com/libp2p/go-libp2p-peerstore
+	url = git@github.com:libp2p/go-libp2p-peerstore.git
+[submodule "src/github.com/libp2p/go-libp2p-protocol"]
+	path = src/github.com/libp2p/go-libp2p-protocol
+	url = git@github.com:libp2p/go-libp2p-protocol.git
+[submodule "src/github.com/libp2p/go-libp2p-record"]
+	path = src/github.com/libp2p/go-libp2p-record
+	url = git@github.com:libp2p/go-libp2p-record.git
+[submodule "src/github.com/libp2p/go-libp2p-routing"]
+	path = src/github.com/libp2p/go-libp2p-routing
+	url = git@github.com:libp2p/go-libp2p-routing.git
+[submodule "src/github.com/libp2p/go-libp2p-transport"]
+	path = src/github.com/libp2p/go-libp2p-transport
+	url = git@github.com:libp2p/go-libp2p-transport.git
+[submodule "src/github.com/libp2p/go-maddr-filter"]
+	path = src/github.com/libp2p/go-maddr-filter
+	url = git@github.com:libp2p/go-maddr-filter.git
+[submodule "src/github.com/multiformats/go-multiaddr"]
+	path = src/github.com/multiformats/go-multiaddr
+	url = git@github.com:multiformats/go-multiaddr.git
+[submodule "src/github.com/multiformats/go-multiaddr-net"]
+	path = src/github.com/multiformats/go-multiaddr-net
+	url = git@github.com:multiformats/go-multiaddr-net.git
+[submodule "src/github.com/multiformats/go-multibase"]
+	path = src/github.com/multiformats/go-multibase
+	url = git@github.com:multiformats/go-multibase.git
+[submodule "src/github.com/multiformats/go-multihash"]
+	path = src/github.com/multiformats/go-multihash
+	url = git@github.com:multiformats/go-multihash.git
+[submodule "src/github.com/multiformats/go-multistream"]
+	path = src/github.com/multiformats/go-multistream
+	url = git@github.com:multiformats/go-multistream.git
+[submodule "src/github.com/satori/go.uuid"]
+	path = src/github.com/satori/go.uuid
+	url = git@github.com:satori/go.uuid.git
+[submodule "src/github.com/whyrusleeping/base32"]
+	path = src/github.com/whyrusleeping/base32
+	url = git@github.com:whyrusleeping/base32.git
+[submodule "src/github.com/whyrusleeping/go-logging"]
+	path = src/github.com/whyrusleeping/go-logging
+	url = git@github.com:whyrusleeping/go-logging.git
+[submodule "src/github.com/whyrusleeping/mafmt"]
+	path = src/github.com/whyrusleeping/mafmt
+	url = git@github.com:whyrusleeping/mafmt.git
+[submodule "src/golang.org.old/x/crypto"]
+	path = src/golang.org.old/x/crypto
+	url = https://go.googlesource.com/crypto
+[submodule "src/golang.org/x/crypto"]
+	path = src/golang.org/x/crypto
+	url = https://go.googlesource.com/crypto
+[submodule "src/github.com/gogo/protobuf"]
+	path = src/github.com/gogo/protobuf
+	url = git@github.com:gogo/protobuf.git
