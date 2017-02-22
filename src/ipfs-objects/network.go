@@ -12,7 +12,6 @@ import (
 var _ ipobj.Network = &Network{}
 
 func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr, updated bool) (<-chan []ipobj.PeerInfo, error) {
-	ctx, cancel := context.WithCancel(ctx)
 	contentid, err := cid.Cast(obj)
 	if err != nil {
 		return nil, err
@@ -40,11 +39,53 @@ func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr, updated bo
 	return res, nil
 }
 
-func (net *Network) GetObject(ipobj.PeerAddr, ipobj.ObjAddr) io.Reader {
+func (net *Network) GetObject(ctx context.Context, obj ipobj.ObjAddr) (io.Reader, error) {
+	id, err := cid.Cast(obj)
+	if err != nil {
+		return nil, err
+	}
+	block, err := net.exchange.GetBlock(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytesToReader(block.RawData()), nil
 }
 
-func (net *Network) Provide(obj ipobj.ObjAddr, update bool) {
+func (net *Network) GetRecord(ctx context.Context, record string) <-chan *ipobj.Record {
+	records := net.client.GetValuesAsync(ctx, record, -1)
+	resChan := make(chan *ipobj.Record, 0)
+	go func() {
+		for {
+			rec := <-records
+			if rec == nil {
+				close(resChan)
+				break
+			} else {
+				resChan <- &ipobj.Record{
+					PeerId:  ipobj.PeerId(rec.From),
+					Content: rec.Val,
+				}
+			}
+		}
+	}()
+	return resChan
 }
 
-func (net *Network) Update(peer ipobj.PeerAddr, obj ipobj.ObjAddr) {
+func (net *Network) ProvideObject(ctx context.Context, obj ipobj.ObjAddr, provide bool) error {
+	id, err := cid.Cast(obj)
+	if err != nil {
+		return err
+	}
+	if provide {
+		net.store.list[string(id.Bytes())] = true
+		return net.client.Provide(ctx, id)
+	} else {
+		delete(net.store.list, string(id.Bytes()))
+		return nil // TODO: remove the block from the DHT
+	}
+}
+
+func (net *Network) ProvideRecord(ctx context.Context, key string, rec []byte) error {
+	return net.client.PutValue(ctx, key, rec)
 }

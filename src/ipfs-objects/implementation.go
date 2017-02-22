@@ -6,7 +6,6 @@ import (
 	"ipobj"
 	"net"
 
-	blockstore "github.com/ipfs/go-ipfs/blocks/blockstore"
 	core "github.com/ipfs/go-ipfs/core"
 	exchange "github.com/ipfs/go-ipfs/exchange"
 	bitswap "github.com/ipfs/go-ipfs/exchange/bitswap"
@@ -28,7 +27,6 @@ import (
 var _ ipobj.Network = &Network{}
 
 type Network struct {
-	ctx context.Context
 
 	// "github.com/ipfs/go-ipfs/routing/supernode"
 	// or *supernode.Client
@@ -40,9 +38,8 @@ type Network struct {
 	// Network should implement blockstore to give it to bitswap
 	// Network should contain bitswap service to get nodes as implementation to
 	// exchange interface
-}
 
-func peerToBlockstore(peerObj ipobj.Peer) blockstore.Blockstore {
+	store *PeerBlockstore
 }
 
 func parseAddrs(addrs []string) ([]*net.IPNet, error) {
@@ -57,12 +54,19 @@ func parseAddrs(addrs []string) ([]*net.IPNet, error) {
 	return addrfilter, nil
 }
 
-func NewNetwork(ctx context.Context, peerObj ipobj.Peer, secretKey ic.PrivKey, clientOnly bool, niceBitswap bool, dialBlockList []string) (*Network, error) {
+type NetworkConfig struct {
+	ClientOnly    bool
+	RudeBitswap   bool
+	DialBlockList []string
+}
+
+func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, secretKey ic.PrivKey) (*Network, error) {
+
 	var err error
 
 	// Get ID from crypto key
 	var id peer.ID
-	id, err = peer.IDFromPrivateKey(secretKey)
+	id, err = peer.IDFromPublicKey(secretKey.GetPublic())
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +78,7 @@ func NewNetwork(ctx context.Context, peerObj ipobj.Peer, secretKey ic.PrivKey, c
 
 	// Parse address filter
 	var fs []*net.IPNet
-	fs, err = parseAddrs(dialBlockList)
+	fs, err = parseAddrs(config.DialBlockList)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +96,7 @@ func NewNetwork(ctx context.Context, peerObj ipobj.Peer, secretKey ic.PrivKey, c
 	// DHT Protocol
 	dstore := ds.NewMapDatastore()
 	var client routing.IpfsRouting
-	if clientOnly {
+	if config.ClientOnly {
 		client = dht.NewDHTClient(ctx, host, dstore)
 	} else {
 		client = dht.NewDHT(ctx, host, dstore)
@@ -101,12 +105,13 @@ func NewNetwork(ctx context.Context, peerObj ipobj.Peer, secretKey ic.PrivKey, c
 	// Bitswap Protocol
 	peerHost := rhost.Wrap(host, client)
 	bitswapNetwork := bsnet.NewFromIpfsHost(peerHost, client)
-	var blockstore blockstore.Blockstore = peerToBlockstore(peerObj)
-	exchange := bitswap.New(ctx, host.ID(), bitswapNetwork, blockstore, niceBitswap)
+	blockstore := NewPeerBlockstore(peerObj)
+	exchange := bitswap.New(ctx, host.ID(), bitswapNetwork, blockstore, !config.RudeBitswap)
 
-	return &Network{
-		ctx:      ctx,
+	net := &Network{
 		client:   client,
 		exchange: exchange,
-	}, nil
+		store:    blockstore,
+	}
+	return net, nil
 }
