@@ -2,56 +2,111 @@ package ipfs_objects
 
 import (
 	"context"
-	"io"
+	"fmt"
 	"ipobj"
+	"net"
 
-	"github.com/ipfs/go-ipfs/routing/supernode"
-	mh "github.com/multiformats/go-multihash"
-	cid "gx/ipfs/QmcTcsTvfaeEBRFo1TkFgT8sRmgi1n1LTZpecfVP8fzpGD/go-cid"
+	blockstore "github.com/ipfs/go-ipfs/blocks/blockstore"
+	core "github.com/ipfs/go-ipfs/core"
+	exchange "github.com/ipfs/go-ipfs/exchange"
+	bitswap "github.com/ipfs/go-ipfs/exchange/bitswap"
+	bsnet "github.com/ipfs/go-ipfs/exchange/bitswap/network"
+
+	p2phost "gx/ipfs/QmPsRtodRuBUir32nz5v4zuSBTSszrR1d3fA6Ahb6eaejj/go-libp2p-host"
+	dht "gx/ipfs/QmRG9fdibExi5DFy8kzyxF76jvZVUb2mQBUSMNP1YaYn9M/go-libp2p-kad-dht"
+	ds "gx/ipfs/QmRWDav6mzWseLWeYfVd5fvUKiVe9xNH29YfMF438fG364/go-datastore"
+	mamask "gx/ipfs/QmSMZwvs3n4GBikZ7hKzT17c3bk65FmyZo2JqtJ16swqCv/multiaddr-filter"
+	metrics "gx/ipfs/QmY2otvyPM2sTaDsczo7Yuosg98sUMCJ9qx1gpPaAPTS9B/go-libp2p-metrics"
+	routing "gx/ipfs/QmbkGVaN9W6RYJK4Ws5FvMKXKDqdRQ5snhtaa92qP6L8eU/go-libp2p-routing"
+	rhost "gx/ipfs/QmdzDdLZ7nj133QvNHypyS9Y39g35bMFk5DJ2pmX7YqtKU/go-libp2p/p2p/host/routed"
 	pstore "gx/ipfs/QmeXj9VAjmYQZxpmVz7VzccbJrpmr8qkCDSjfVNsPTWTYU/go-libp2p-peerstore"
+	smux "gx/ipfs/QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy/go-stream-muxer"
+	peer "gx/ipfs/QmfMmLGoKzCHDN7cGgk64PJr4iipzidDRME8HABSJqvmhC/go-libp2p-peer"
+	ic "gx/ipfs/QmfWDLQjGjVe4fr5CoztYW2DYYjRysMJrFe1RCsXLPTf46/go-libp2p-crypto"
 )
 
 var _ ipobj.Network = &Network{}
 
 type Network struct {
-	client *supernode.Client
+	ctx context.Context
+
+	// "github.com/ipfs/go-ipfs/routing/supernode"
+	// or *supernode.Client
+	client routing.IpfsRouting
+
+	// See go-ipfs/core/builder.go
+	exchange exchange.Interface
+
+	// Network should implement blockstore to give it to bitswap
+	// Network should contain bitswap service to get nodes as implementation to
+	// exchange interface
 }
 
-func NewNetwork() *Network {
-	return &Network{}
+func peerToBlockstore(peerObj ipobj.Peer) blockstore.Blockstore {
 }
 
-func (net *Network) Providers(obj ObjAddr, updated bool) <-chan []PeerInfo {
-	ctx, cancel := context.WithCancel(context.Background())
-	contentid := cid.Cast(obj)
-	size := 4
-	res := make(chan []PeerInfo, 0)
-	respond = func(info []PeerInfo) (cont bool) {
-		cont = false
-		defer recover()
-		res <- info
-		cont = true
-		return
-	}
-	go func() {
-		for {
-			c := net.client.FindProvidersAsync(ctx, contentid, MaxProviders, size)
-			for var i := 0; i < size; i++ {
-				var peer pstore.PeerInfo
-				peer <- c
-				respond([]PeerInfo{peer})
-			}
-			size = size * 2
+func parseAddrs(addrs []string) ([]*net.IPNet, error) {
+	var addrfilter []*net.IPNet
+	for _, s := range addrs {
+		f, err := mamask.NewMask(s)
+		if err != nil {
+			return nil, fmt.Errorf("incorrectly formatted address filter in config: %s", s)
 		}
-	}()
-	return res
+		addrfilter = append(addrfilter, f)
+	}
+	return addrfilter, nil
 }
 
-func (net *Network) GetObject(ipobj.PeerAddr, ipobj.ObjAddr) io.Reader {
-}
+func NewNetwork(ctx context.Context, peerObj ipobj.Peer, secretKey ic.PrivKey, clientOnly bool, niceBitswap bool, dialBlockList []string) (*Network, error) {
+	var err error
 
-func (net *Network) Provide(obj ObjAddr, update bool) {
-}
+	// Get ID from crypto key
+	var id peer.ID
+	id, err = peer.IDFromPrivateKey(secretKey)
+	if err != nil {
+		return nil, err
+	}
 
-func (net *Network) Update(peer PeerAddr, obj ObjAddr) {
+	// Add ID to peer store
+	var ps pstore.Peerstore = pstore.NewPeerstore()
+	ps.AddPrivKey(id, secretKey)
+	ps.AddPubKey(id, secretKey.GetPublic())
+
+	// Parse address filter
+	var fs []*net.IPNet
+	fs, err = parseAddrs(dialBlockList)
+	if err != nil {
+		return nil, err
+	}
+
+	// Network Host with transport layer
+	var mplexEnable bool = true
+	var bwr metrics.Reporter = nil // Don't do statistics
+	var tpt smux.Transport = makeSmuxTransport(mplexEnable)
+	var host p2phost.Host
+	host, err = core.DefaultHostOption(ctx, id, ps, bwr, fs, tpt)
+	if err != nil {
+		return nil, err
+	}
+
+	// DHT Protocol
+	dstore := ds.NewMapDatastore()
+	var client routing.IpfsRouting
+	if clientOnly {
+		client = dht.NewDHTClient(ctx, host, dstore)
+	} else {
+		client = dht.NewDHT(ctx, host, dstore)
+	}
+
+	// Bitswap Protocol
+	peerHost := rhost.Wrap(host, client)
+	bitswapNetwork := bsnet.NewFromIpfsHost(peerHost, client)
+	var blockstore blockstore.Blockstore = peerToBlockstore(peerObj)
+	exchange := bitswap.New(ctx, host.ID(), bitswapNetwork, blockstore, niceBitswap)
+
+	return &Network{
+		ctx:      ctx,
+		client:   client,
+		exchange: exchange,
+	}, nil
 }

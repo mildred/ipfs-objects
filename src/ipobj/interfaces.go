@@ -1,6 +1,7 @@
 package ipobj
 
 import (
+	"context"
 	"io"
 )
 
@@ -21,25 +22,35 @@ type PeerId []byte
 
 // Peer info
 type PeerInfo struct {
-	Id      PeerId
-	Address []PeerAddr
+	Id    PeerId
+	Addrs []PeerAddr
+}
+
+// Record
+type Record struct {
+	PeerId  PeerId
+	Content []byte
 }
 
 type Network interface {
 	// List providers for ObjHash. if updated is true, omit address of providers
 	// that explicitely don't try to maintain the object up to date.
 	// The search continues until the result channel is closed.
-	Providers(obj ObjAddr, updated bool) <-chan []PeerInfo
+	Providers(ctx context.Context, obj ObjAddr, updated bool) (<-chan []PeerInfo, error)
 
-	// Get an object obj provided by peer at address
-	GetObject(peer PeerAddr, obj ObjAddr) io.Reader
+	// Get an object obj
+	GetObject(ctx context.Context, obj ObjAddr) io.Reader
 
-	// Advertise the posession of an object. update to true means we are willing
-	// to update if a new version can be found.
-	Provide(obj ObjAddr, update bool)
+	// Get a record, a record generally contains a address to the object it
+	// resolves and a version number to be able to order the records
+	GetRecord(ctx context.Context, obj ObjAddr) <-chan Record
 
-	// Tell peer that we have an updated version of object
-	Update(peer PeerAddr, obj ObjAddr)
+	// Advertise the posession of an object.
+	ProvideObject(obj ObjAddr)
+
+	// Advertise a record on the DHT.
+	// Good practice is to GetRecord before so we can update ourselves
+	ProvideRecord(obj ObjAddr, objs []Record)
 }
 
 type Peer interface {
