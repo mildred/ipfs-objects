@@ -8,7 +8,7 @@ import (
 	ipfs_objects "ipfs-objects"
 	"ipobj"
 
-	ic "gx/ipfs/QmfWDLQjGjVe4fr5CoztYW2DYYjRysMJrFe1RCsXLPTf46/go-libp2p-crypto"
+	ic "gx/ipfs/QmNiCwBNA8MWDADTFVq1BonUEJbS2SvjAoNkZZrhEwcuUi/go-libp2p-crypto"
 )
 
 func Main() {
