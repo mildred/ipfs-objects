@@ -1,0 +1,38 @@
+From 3be4f082a08be638b62cdcdbf4098e9cd2353347 Mon Sep 17 00:00:00 2001
+From: Mildred Ki'Lya <mildred-pub.git@mildred.fr>
+Date: Wed, 22 Feb 2017 20:29:59 +0100
+Subject: [PATCH] go-libp2p-routing: add GetValuesAsync to interface
+
+---
+ .../go-libp2p-routing/routing.go                          | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/src/gx/ipfs/QmbkGVaN9W6RYJK4Ws5FvMKXKDqdRQ5snhtaa92qP6L8eU/go-libp2p-routing/routing.go b/src/gx/ipfs/QmbkGVaN9W6RYJK4Ws5FvMKXKDqdRQ5snhtaa92qP6L8eU/go-libp2p-routing/routing.go
+index 6d19bed..c1f1459 100644
+--- a/src/gx/ipfs/QmbkGVaN9W6RYJK4Ws5FvMKXKDqdRQ5snhtaa92qP6L8eU/go-libp2p-routing/routing.go
++++ b/src/gx/ipfs/QmbkGVaN9W6RYJK4Ws5FvMKXKDqdRQ5snhtaa92qP6L8eU/go-libp2p-routing/routing.go
+@@ -54,6 +54,21 @@ type ValueStore interface {
+ 	// As a result, a value of '1' is mostly useful for cases where the record
+ 	// in question has only one valid value (such as public keys)
+ 	GetValues(c context.Context, k string, count int) ([]RecvdVal, error)
++
++	// GetValues searches for values corresponding to given Key.
++	//
++	// Passing a negative value to the count argument, the search will not stop
++	// until the context is cancelled or timeouts
++	//
++	// Passing a value of '0' for the count argument will cause the
++	// routing interface to return values only from cached or local storage
++	// and return an error if no cached value is found.
++	//
++	// Passing a value of '1' will return a local value if found, and query
++	// the network for the first value it finds otherwise.
++	// As a result, a value of '1' is mostly useful for cases where the record
++	// in question has only one valid value (such as public keys)
++	GetValuesAsync(c context.Context, k string, count int) <-chan *RecvdVal
+ }
+ 
+ // IpfsRouting is the combination of different routing types that ipfs
+-- 
+2.9.3
+
