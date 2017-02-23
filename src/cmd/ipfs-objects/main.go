@@ -22,16 +22,22 @@ func main() {
 	case "keygen":
 		err = keygen(flag.Args())
 		break
+	case "resolve":
+		err = resolve(flag.Args())
+		break
+	case "advertise":
+		err = advertise(flag.Args())
+		break
 	default:
 		err = fmt.Errorf("Please specify a valid command")
 		fallthrough
 	case "help":
 		fmt.Println("Available commands:")
-		fmt.Println("\thelp")
-		fmt.Println("\tkeygen")
+		fmt.Println("\thelp      - this help")
+		fmt.Println("\tkeygen    - generate secret key")
+		fmt.Println("\tresolve   - resolve naming record to root block")
 		fmt.Println("Unavailable commands:")
 		fmt.Println("\tadvertise - advertise naming record to root block")
-		fmt.Println("\tresolve   - resolve naming record to root block")
 		break
 	}
 
@@ -41,42 +47,22 @@ func main() {
 	}
 }
 
-func keygen(args []string) error {
-	var f flag.FlagSet
-	var out string
-	var keytype string
-	var keysize int
-	f.StringVar(&out, "o", "", "Output file")
-	f.StringVar(&keytype, "t", "ed25519", "Key Type")
-	f.IntVar(&keysize, "s", 4096, "Key Size (for RSA)")
-	f.Parse(args[1:])
-
-	if out == "" {
-		return fmt.Errorf("Please specify a filename with -o")
-	}
-
-	var sk ic.PrivKey
-	var err error
-
-	switch keytype {
-	case "ed25519":
-		sk, _, err = ic.GenerateEd25519Key(rand.Reader)
-	case "rsa":
-		sk, _, err = ic.GenerateKeyPairWithReader(ic.RSA, keysize, rand.Reader)
-	default:
-		err = fmt.Errorf("Supported key types: rsa, ed25519")
-	}
-
+func readKeyFile(keyfile string) (ic.PrivKey, error) {
+	bytes, err := ioutil.ReadFile(keyfile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	bytes, err := sk.Bytes()
+	sk, err := ic.UnmarshalPrivateKey(bytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return sk, err
+}
 
-	return ioutil.WriteFile(out, bytes, 0600)
+func dummySecretKey() (ic.PrivKey, error) {
+	sk, _, err := ic.GenerateEd25519Key(rand.Reader)
+	return sk, err
 }
 
 func daemon(args []string) error {
@@ -89,15 +75,7 @@ func daemon(args []string) error {
 		return fmt.Errorf("Please specify a key file with -k")
 	}
 
-	bytes, err := ioutil.ReadFile(keyfile)
-	if err != nil {
-		return err
-	}
-
-	sk, err := ic.UnmarshalPrivateKey(bytes)
-	if err != nil {
-		return err
-	}
+	sk, err := readKeyFile(keyfile)
 
 	var config ipfs_objects.NetworkConfig
 	var net ipobj.Network

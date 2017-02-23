@@ -2,6 +2,7 @@ package ipobj
 
 import (
 	"context"
+	"errors"
 	"io"
 )
 
@@ -64,4 +65,14 @@ type Peer interface {
 
 	// The network requires the object
 	GetObject(obj ObjAddr) (io.Reader, error)
+}
+
+var NoObject error = errors.New("No object for NullPeer")
+var NullPeer Peer = &nullPeer{}
+
+type nullPeer struct{}
+
+func (*nullPeer) Updated(peer PeerAddr, obj ObjAddr) {}
+func (*nullPeer) GetObject(obj ObjAddr) (io.Reader, error) {
+	return nil, NoObject
 }
