@@ -103,3 +103,21 @@
 [submodule "src/github.com/gogo/protobuf"]
 	path = src/github.com/gogo/protobuf
 	url = git@github.com:gogo/protobuf.git
+[submodule "src/github.com/hashicorp/golang-lru"]
+	path = src/github.com/hashicorp/golang-lru
+	url = https://github.com/hashicorp/golang-lru.git
+[submodule "src/github.com/ipfs/go-todocounter"]
+	path = src/github.com/ipfs/go-todocounter
+	url = https://github.com/ipfs/go-todocounter.git
+[submodule "src/github.com/jbenet/go-context"]
+	path = src/github.com/jbenet/go-context
+	url = https://github.com/jbenet/go-context.git
+[submodule "src/github.com/whyrusleeping/go-keyspace"]
+	path = src/github.com/whyrusleeping/go-keyspace
+	url = https://github.com/whyrusleeping/go-keyspace.git
+[submodule "src/github.com/whyrusleeping/autobatch"]
+	path = src/github.com/whyrusleeping/autobatch
+	url = https://github.com/whyrusleeping/autobatch.git
+[submodule "src/golang.org/x/net"]
+	path = src/golang.org/x/net
+	url = https://go.googlesource.com/net.git

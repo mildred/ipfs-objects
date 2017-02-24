@@ -6,22 +6,26 @@ import (
 	"ipobj"
 	"net"
 
-	core "github.com/ipfs/go-ipfs/core"
 	exchange "github.com/ipfs/go-ipfs/exchange"
 	bitswap "github.com/ipfs/go-ipfs/exchange/bitswap"
-	bsnet "github.com/ipfs/go-ipfs/exchange/bitswap/network"
+	ipfs_bsnet "github.com/ipfs/go-ipfs/exchange/bitswap/network"
+	//dht "github.com/libp2p/go-libp2p-kad-dht"
+	//routing "github.com/libp2p/go-libp2p-routing"
 
-	p2phost "gx/ipfs/QmbzbRyd22gcW92U1rA2yKagB3myMYhk45XBknJ49F9XWJ/go-libp2p-host"
-	dht "gx/ipfs/QmdFu71pRmWMNWht96ZTJ3wRx4D7BPJ2JfHH24z59Gidsc/go-libp2p-kad-dht"
+	ic "gx/ipfs/QmNiCwBNA8MWDADTFVq1BonUEJbS2SvjAoNkZZrhEwcuUi/go-libp2p-crypto"
+	metrics "gx/ipfs/QmPj6rmE2sWJ65h6b8F4fcN5kySDhYqL2Ty8DWWF3WEUNS/go-libp2p-metrics"
+	pstore "gx/ipfs/QmQMQ2RUjnaEEX8ybmrhuFFGhAwPjyL1Eo6ZoJGD7aAccM/go-libp2p-peerstore"
 	ds "gx/ipfs/QmRWDav6mzWseLWeYfVd5fvUKiVe9xNH29YfMF438fG364/go-datastore"
 	mamask "gx/ipfs/QmSMZwvs3n4GBikZ7hKzT17c3bk65FmyZo2JqtJ16swqCv/multiaddr-filter"
-	metrics "gx/ipfs/QmPj6rmE2sWJ65h6b8F4fcN5kySDhYqL2Ty8DWWF3WEUNS/go-libp2p-metrics"
-	routing "gx/ipfs/QmZghcVHwXQC3Zvnvn24LgTmSPkEn2o3PDyKb6nrtPRzRh/go-libp2p-routing"
-	rhost "gx/ipfs/QmSNJRX4uphb3Eyp69uYbpRVvgqjPxfjnJmjcdMWkDH5Pn/go-libp2p/p2p/host/routed"
-	pstore "gx/ipfs/QmQMQ2RUjnaEEX8ybmrhuFFGhAwPjyL1Eo6ZoJGD7aAccM/go-libp2p-peerstore"
-	smux "gx/ipfs/QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy/go-stream-muxer"
+	p2pbhost "gx/ipfs/QmSNJRX4uphb3Eyp69uYbpRVvgqjPxfjnJmjcdMWkDH5Pn/go-libp2p/p2p/host/basic"
+	ipfs_rhost "gx/ipfs/QmSNJRX4uphb3Eyp69uYbpRVvgqjPxfjnJmjcdMWkDH5Pn/go-libp2p/p2p/host/routed"
+	swarm "gx/ipfs/QmY8hduizbuACvYmL4aZQbpFeKhEQJ1Nom2jY6kv6rL8Gf/go-libp2p-swarm"
+	ipfs_peer "gx/ipfs/QmZcUPvPhD1Xvk6mwijYF8AfR3mG31S1YsEfHG4khrFPRr/go-libp2p-peer"
 	peer "gx/ipfs/QmZcUPvPhD1Xvk6mwijYF8AfR3mG31S1YsEfHG4khrFPRr/go-libp2p-peer"
-	ic "gx/ipfs/QmNiCwBNA8MWDADTFVq1BonUEJbS2SvjAoNkZZrhEwcuUi/go-libp2p-crypto"
+	routing "gx/ipfs/QmZghcVHwXQC3Zvnvn24LgTmSPkEn2o3PDyKb6nrtPRzRh/go-libp2p-routing"
+	p2phost "gx/ipfs/QmbzbRyd22gcW92U1rA2yKagB3myMYhk45XBknJ49F9XWJ/go-libp2p-host"
+	dht "gx/ipfs/QmdFu71pRmWMNWht96ZTJ3wRx4D7BPJ2JfHH24z59Gidsc/go-libp2p-kad-dht"
+	smux "gx/ipfs/QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy/go-stream-muxer"
 )
 
 var _ ipobj.Network = &Network{}
@@ -60,6 +64,26 @@ type NetworkConfig struct {
 	DialBlockList []string
 }
 
+// isolates the complex initialization steps
+func constructPeerHost(ctx context.Context, id peer.ID, ps pstore.Peerstore, bwr metrics.Reporter, fs []*net.IPNet, tpt smux.Transport) (p2phost.Host, error) {
+
+	// no addresses to begin with. we'll start later.
+	swrm, err := swarm.NewSwarmWithProtector(ctx, nil, id, ps, nil, tpt, bwr)
+	if err != nil {
+		return nil, err
+	}
+
+	network := (*swarm.Network)(swrm)
+
+	for _, f := range fs {
+		network.Swarm().Filters.AddDialFilter(f)
+	}
+
+	host := p2pbhost.New(network, p2pbhost.NATPortMap, bwr)
+
+	return host, nil
+}
+
 func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, secretKey ic.PrivKey) (*Network, error) {
 
 	var err error
@@ -88,7 +112,7 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 	var bwr metrics.Reporter = nil // Don't do statistics
 	var tpt smux.Transport = makeSmuxTransport(mplexEnable)
 	var host p2phost.Host
-	host, err = core.DefaultHostOption(ctx, id, ps, bwr, fs, tpt)
+	host, err = constructPeerHost(ctx, id, ps, bwr, fs, tpt)
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +127,10 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 	}
 
 	// Bitswap Protocol
-	peerHost := rhost.Wrap(host, client)
-	bitswapNetwork := bsnet.NewFromIpfsHost(peerHost, client)
+	peerHost := ipfs_rhost.Wrap(host, client)
+	bitswapNetwork := ipfs_bsnet.NewFromIpfsHost(peerHost, client)
 	blockstore := NewPeerBlockstore(peerObj)
-	exchange := bitswap.New(ctx, host.ID(), bitswapNetwork, blockstore, !config.RudeBitswap)
+	exchange := bitswap.New(ctx, ipfs_peer.ID(host.ID()), bitswapNetwork, blockstore, !config.RudeBitswap)
 
 	net := &Network{
 		client:   client,
