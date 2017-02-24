@@ -7,7 +7,7 @@ import (
 	ipfs_blocks "github.com/ipfs/go-ipfs/blocks"
 	ipfs_blockstore "github.com/ipfs/go-ipfs/blocks/blockstore"
 
-	ipfs_cid "gx/ipfs/QmV5gPoRsjN1Gid3LMdNZTyfCtP2DsvqEbMAmz82RmmiGk/go-cid"
+	ipfs_cid "github.com/ipfs/go-cid"
 )
 
 var _ ipfs_blockstore.Blockstore = &PeerBlockstore{}

@@ -12,7 +12,7 @@ import (
 
 	"github.com/jbenet/go-base58"
 
-	ic "gx/ipfs/QmNiCwBNA8MWDADTFVq1BonUEJbS2SvjAoNkZZrhEwcuUi/go-libp2p-crypto"
+	ic "github.com/libp2p/go-libp2p-crypto"
 )
 
 func resolve(args []string) error {

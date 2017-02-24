@@ -226,3 +226,9 @@
 [submodule "src/github.com/gxed/GoEndian"]
 	path = src/github.com/gxed/GoEndian
 	url = https://github.com/gxed/GoEndian.git
+[submodule "src/github.com/whyrusleeping/go-smux-multiplex"]
+	path = src/github.com/whyrusleeping/go-smux-multiplex
+	url = https://github.com/whyrusleeping/go-smux-multiplex.git
+[submodule "src/github.com/whyrusleeping/go-multiplex"]
+	path = src/github.com/whyrusleeping/go-multiplex
+	url = https://github.com/whyrusleeping/go-multiplex.git

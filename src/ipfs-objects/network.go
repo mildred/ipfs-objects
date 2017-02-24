@@ -5,8 +5,8 @@ import (
 	"io"
 	"ipobj"
 
-	cid "gx/ipfs/QmV5gPoRsjN1Gid3LMdNZTyfCtP2DsvqEbMAmz82RmmiGk/go-cid"
-	pstore "gx/ipfs/QmQMQ2RUjnaEEX8ybmrhuFFGhAwPjyL1Eo6ZoJGD7aAccM/go-libp2p-peerstore"
+	cid "github.com/ipfs/go-cid"
+	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 var _ ipobj.Network = &Network{}
