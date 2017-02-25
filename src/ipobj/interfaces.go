@@ -19,18 +19,15 @@ type ObjAddr []byte
 // Multuaddress or node info
 type PeerAddr []byte
 
-// Peer ID
-type PeerId []byte
-
 // Peer info
 type PeerInfo struct {
-	Id    PeerId
+	Id    string
 	Addrs []PeerAddr
 }
 
 // Record
 type Record struct {
-	PeerId  PeerId
+	PeerId  string
 	Content []byte
 }
 
@@ -47,6 +44,10 @@ type Network interface {
 	// resolves and a version number to be able to order the records
 	GetRecord(ctx context.Context, record string) <-chan *Record
 
+	// Get a record, a record generally contains a address to the object it
+	// resolves and a version number to be able to order the records
+	GetRecordFrom(ctx context.Context, peerId string, key string) ([]byte, error)
+
 	// Advertise the posession or not of an object.
 	ProvideObject(ctx context.Context, obj ObjAddr, provide bool) error
 
@@ -54,8 +55,8 @@ type Network interface {
 	// Good practice is to GetRecord before so we can update ourselves
 	ProvideRecord(ctx context.Context, key string, rec []byte) error
 
-	// TODO: Tell a peer that its record is not up to date
-	// UpdatePeer(ctw context.Context, peer PeerId, record []byte) error
+	// Tell a peer that its record is not up to date
+	UpdatePeerRecord(ctw context.Context, peerId string, key string, record []byte) error
 }
 
 type Peer interface {

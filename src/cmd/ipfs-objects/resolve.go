@@ -10,8 +10,6 @@ import (
 	ipfs_objects "ipfs-objects"
 	"ipobj"
 
-	"github.com/jbenet/go-base58"
-
 	ic "github.com/libp2p/go-libp2p-crypto"
 )
 
@@ -63,7 +61,7 @@ func resolve(args []string) error {
 			if res == nil {
 				fmt.Printf("%s: not found\n", record)
 			} else {
-				fmt.Printf("%s: response from %v\n", base58.Encode(res.PeerId))
+				fmt.Printf("%s: response from %v\n", res.PeerId)
 			}
 		}(record)
 	}

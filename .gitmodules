@@ -36,7 +36,7 @@
 	url = git@github.com:libp2p/go-libp2p-interface-conn.git
 [submodule "src/github.com/libp2p/go-libp2p-kad-dht"]
 	path = src/github.com/libp2p/go-libp2p-kad-dht
-	url = git@github.com:libp2p/go-libp2p-kad-dht.git
+	url = git@github.com:mildred/go-libp2p-kad-dht.git
 [submodule "src/github.com/libp2p/go-libp2p-kbucket"]
 	path = src/github.com/libp2p/go-libp2p-kbucket
 	url = git@github.com:libp2p/go-libp2p-kbucket.git
@@ -232,3 +232,6 @@
 [submodule "src/github.com/whyrusleeping/go-multiplex"]
 	path = src/github.com/whyrusleeping/go-multiplex
 	url = https://github.com/whyrusleeping/go-multiplex.git
+[submodule "src/github.com/multiformats/multicodec"]
+	path = src/github.com/multiformats/multicodec
+	url = https://github.com/mildred/multicodec.git

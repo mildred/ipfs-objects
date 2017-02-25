@@ -56,7 +56,7 @@ func encodePeerInfo(i ipobj.PeerInfo) (res pstore.PeerInfo) {
 }
 
 func decodePeerInfo(i pstore.PeerInfo) (res ipobj.PeerInfo) {
-	res.Id = ipobj.PeerId(i.ID)
+	res.Id = string(i.ID)
 	for _, a := range i.Addrs {
 		res.Addrs = append(res.Addrs, a.Bytes())
 	}

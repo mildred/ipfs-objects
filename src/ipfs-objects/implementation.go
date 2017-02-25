@@ -27,11 +27,17 @@ import (
 
 var _ ipobj.Network = &Network{}
 
+type objectsRouting interface {
+	routing.IpfsRouting
+	GetValueFromPeer(ctx context.Context, p peer.ID, key string, validate bool) (rv routing.RecvdVal, err error)
+	PutValueToPeer(ctx context.Context, p peer.ID, key string, value []byte) error
+}
+
 type Network struct {
 
 	// "github.com/ipfs/go-ipfs/routing/supernode"
 	// or *supernode.Client
-	client routing.IpfsRouting
+	client objectsRouting
 
 	// See go-ipfs/core/builder.go
 	exchange exchange.Interface
@@ -116,7 +122,7 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 
 	// DHT Protocol
 	dstore := ds.NewMapDatastore()
-	var client routing.IpfsRouting
+	var client objectsRouting
 	if config.ClientOnly {
 		client = dht.NewDHTClient(ctx, host, dstore)
 	} else {

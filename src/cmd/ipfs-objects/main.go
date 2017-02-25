@@ -36,7 +36,6 @@ func main() {
 		fmt.Println("\thelp      - this help")
 		fmt.Println("\tkeygen    - generate secret key")
 		fmt.Println("\tresolve   - resolve naming record to root block")
-		fmt.Println("Unavailable commands:")
 		fmt.Println("\tadvertise - advertise naming record to root block")
 		break
 	}

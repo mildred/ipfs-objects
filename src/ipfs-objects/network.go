@@ -6,10 +6,21 @@ import (
 	"ipobj"
 
 	cid "github.com/ipfs/go-cid"
+	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 var _ ipobj.Network = &Network{}
+
+const RecordCidCode = 0x0220
+
+func NewRecordCid(key string) *cid.Cid {
+	return cid.NewCidV1(RecordCidCode, []byte(key))
+}
+
+func NewRecordObjAddr(key string) ipobj.ObjAddr {
+	return ipobj.ObjAddr(cid.NewCidV1(RecordCidCode, []byte(key)).Bytes())
+}
 
 func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr, updated bool) (<-chan []ipobj.PeerInfo, error) {
 	contentid, err := cid.Cast(obj)
@@ -63,7 +74,7 @@ func (net *Network) GetRecord(ctx context.Context, record string) <-chan *ipobj.
 				break
 			} else {
 				resChan <- &ipobj.Record{
-					PeerId:  ipobj.PeerId(rec.From),
+					PeerId:  string(rec.From),
 					Content: rec.Val,
 				}
 			}
@@ -88,4 +99,16 @@ func (net *Network) ProvideObject(ctx context.Context, obj ipobj.ObjAddr, provid
 
 func (net *Network) ProvideRecord(ctx context.Context, key string, rec []byte) error {
 	return net.client.PutValue(ctx, key, rec)
+}
+
+func (net *Network) GetRecordFrom(ctx context.Context, peerId string, key string) ([]byte, error) {
+	rec, err := net.client.GetValueFromPeer(ctx, peer.ID(peerId), key, false)
+	if err != nil {
+		return nil, err
+	}
+	return rec.Val, nil
+}
+
+func (net *Network) UpdatePeerRecord(ctx context.Context, peerId string, key string, record []byte) error {
+	return net.client.PutValueToPeer(ctx, peer.ID(peerId), key, record)
 }
