@@ -42,6 +42,8 @@ type Network struct {
 	// See go-ipfs/core/builder.go
 	exchange exchange.Interface
 
+	id peer.ID
+
 	// Network should implement blockstore to give it to bitswap
 	// Network should contain bitswap service to get nodes as implementation to
 	// exchange interface
@@ -122,12 +124,13 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 
 	// DHT Protocol
 	dstore := ds.NewMapDatastore()
-	var client objectsRouting
+	var client *dht.IpfsDHT
 	if config.ClientOnly {
 		client = dht.NewDHTClient(ctx, host, dstore)
 	} else {
 		client = dht.NewDHT(ctx, host, dstore)
 	}
+	client.DataHandler = &PeerRecord{peerObj}
 
 	// Bitswap Protocol
 	peerHost := ipfs_rhost.Wrap(host, client)
@@ -139,6 +142,7 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 		client:   client,
 		exchange: exchange,
 		store:    blockstore,
+		id:       id,
 	}
 	return net, nil
 }

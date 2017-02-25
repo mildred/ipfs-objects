@@ -4,16 +4,25 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	ipfs_objects "ipfs-objects"
 	"ipobj"
 
+	base58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
 )
+
+type advertisePeer struct {
+	ipobj.NullPeerType
+	values map[string][]byte
+}
+
+func (ap *advertisePeer) GetRecord(key string) ([]byte, error) {
+	return ap.values[key], nil
+}
+
+func (ap *advertisePeer) NewRecord(key string, value []byte, peer []byte) {}
 
 func advertise(args []string) error {
 	var f flag.FlagSet
@@ -31,30 +40,30 @@ func advertise(args []string) error {
 		sk, err = readKeyFile(keyfile)
 	}
 
+	recordKey := f.Arg(0)
+	recordData := []byte(f.Arg(1))
+
+	var peer *advertisePeer = new(advertisePeer)
+	peer.values = map[string][]byte{
+		recordKey: recordData,
+	}
+
 	var config ipfs_objects.NetworkConfig
-	net, err := ipfs_objects.NewNetwork(context.Background(), config, ipobj.NullPeer, sk)
+	net, err := ipfs_objects.NewNetwork(context.Background(), config, peer, sk)
 	if err != nil {
 		return err
 	}
 
-	ctx, stop := context.WithCancel(context.Background())
-	c := make(chan os.Signal, 5)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-	go func() {
-		for {
-			sig := <-c
-			fmt.Fprintf(os.Stderr, "Received signal %v: stop operations", sig)
-			stop()
-		}
-	}()
+	fmt.Printf("Peer id: %s\n", base58.Encode(net.Id()))
 
-	record := f.Arg(0)
-	recordData := []byte(f.Arg(1))
+	ctx := contextWithSignal(context.Background())
 
 	for {
 		deadline := time.Now().Add(interval)
 
-		err := net.ProvideRecord(ctx, record, recordData)
+		cid := ipobj.NewRecordObjAddr(recordKey)
+		fmt.Printf("Advertise CID: %s\n", base58.Encode(cid))
+		net.ProvideObject(ctx, cid, true)
 		if err != nil {
 			return err
 		}

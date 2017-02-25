@@ -4,13 +4,28 @@ import (
 	"context"
 	"ipobj"
 
+	ipfs_cid "github.com/ipfs/go-cid"
 	ipfs_blocks "github.com/ipfs/go-ipfs/blocks"
 	ipfs_blockstore "github.com/ipfs/go-ipfs/blocks/blockstore"
-
-	ipfs_cid "github.com/ipfs/go-cid"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 var _ ipfs_blockstore.Blockstore = &PeerBlockstore{}
+var _ dht.RecordHandler = &PeerRecord{}
+
+type PeerRecord struct {
+	peer ipobj.Peer
+}
+
+func (pr *PeerRecord) GetRecord(key string) ([]byte, error) {
+	return pr.peer.GetRecord(key)
+}
+
+func (pr *PeerRecord) NewRecord(key string, value []byte, p peer.ID) bool {
+	pr.peer.NewRecord(key, value, []byte(p))
+	return true
+}
 
 type PeerBlockstore struct {
 	peer ipobj.Peer

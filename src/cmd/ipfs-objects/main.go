@@ -7,16 +7,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/signal"
+	"syscall"
 
 	ipfs_objects "ipfs-objects"
 	"ipobj"
 
+	"github.com/ipfs/go-log"
 	ic "github.com/libp2p/go-libp2p-crypto"
 )
 
 func main() {
 	var err error
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "debug logging")
 	flag.Parse()
+
+	if debug {
+		log.SetDebugLogging()
+	}
 
 	switch flag.Arg(0) {
 	case "keygen":
@@ -87,4 +96,22 @@ func daemon(args []string) error {
 
 	_ = net
 	return nil
+}
+
+func contextWithSignal(ctx context.Context) context.Context {
+	return ctx
+}
+
+func contextWithSignalBug(ctx context.Context) context.Context {
+	ctx2, stop := context.WithCancel(ctx)
+	c := make(chan os.Signal, 5)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		for {
+			sig := <-c
+			fmt.Fprintf(os.Stderr, "Received signal %v: stop operations", sig)
+			stop()
+		}
+	}()
+	return ctx2
 }

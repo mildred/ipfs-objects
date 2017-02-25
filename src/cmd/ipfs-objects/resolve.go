@@ -10,6 +10,7 @@ import (
 	ipfs_objects "ipfs-objects"
 	"ipobj"
 
+	base58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
 )
 
@@ -38,7 +39,9 @@ func resolve(args []string) error {
 		return err
 	}
 
-	ctx := context.Background()
+	fmt.Printf("Peer id: %s\n", base58.Encode(net.Id()))
+
+	ctx := contextWithSignal(context.Background())
 	var wg sync.WaitGroup
 
 	for _, record := range f.Args() {
@@ -55,13 +58,37 @@ func resolve(args []string) error {
 			}
 			defer cancel()
 
-			records := net.GetRecord(ctx2, record)
+			cid := ipobj.NewRecordObjAddr(record)
+			fmt.Printf("Request CID: %s\n", base58.Encode(cid))
+			peers, err := net.Providers(ctx2, cid)
+			if err != nil {
+				fmt.Printf("%s: error: %v\n", record, err)
+				return
+			}
 
-			res := <-records
-			if res == nil {
-				fmt.Printf("%s: not found\n", record)
-			} else {
-				fmt.Printf("%s: response from %v\n", res.PeerId)
+		loop:
+			for {
+				var pl []ipobj.PeerInfo
+				select {
+				case <-ctx.Done():
+					break loop
+				case pl = <-peers:
+					if pl == nil {
+						fmt.Printf("%s: no provider\n", record)
+						break loop
+					}
+					break
+				}
+
+				for _, p := range pl {
+					fmt.Printf("%s: possible provider: %s %#v\n", record, base58.Encode(p.Id), p)
+					data, err := net.GetRecordFrom(ctx, p.Id, record)
+					if err != nil {
+						fmt.Printf("%s: error from %s: %v\n", record, base58.Encode(p.Id), err)
+						continue
+					}
+					fmt.Printf("%s: response from: %v\n\t%v\n", record, base58.Encode(p.Id), data)
+				}
 			}
 		}(record)
 	}

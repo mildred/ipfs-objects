@@ -12,17 +12,11 @@ import (
 
 var _ ipobj.Network = &Network{}
 
-const RecordCidCode = 0x0220
-
-func NewRecordCid(key string) *cid.Cid {
-	return cid.NewCidV1(RecordCidCode, []byte(key))
+func (net *Network) Id() []byte {
+	return []byte(net.id)
 }
 
-func NewRecordObjAddr(key string) ipobj.ObjAddr {
-	return ipobj.ObjAddr(cid.NewCidV1(RecordCidCode, []byte(key)).Bytes())
-}
-
-func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr, updated bool) (<-chan []ipobj.PeerInfo, error) {
+func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan []ipobj.PeerInfo, error) {
 	contentid, err := cid.Cast(obj)
 	if err != nil {
 		return nil, err
@@ -38,11 +32,19 @@ func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr, updated bo
 	}
 	go func() {
 		for {
-			c := net.client.FindProvidersAsync(ctx, contentid, size)
+			ctx2, cancel := context.WithCancel(ctx)
+			c := net.client.FindProvidersAsync(ctx2, contentid, size)
 			for i := 0; i < size; i++ {
 				var peer pstore.PeerInfo
 				peer = <-c
-				respond([]ipobj.PeerInfo{decodePeerInfo(peer)})
+				var peers []ipobj.PeerInfo
+				if len(peer.ID) > 0 {
+					peers = append(peers, decodePeerInfo(peer))
+				}
+				if !respond(peers) {
+					cancel()
+					return
+				}
 			}
 			size = size * 2
 		}
@@ -74,7 +76,7 @@ func (net *Network) GetRecord(ctx context.Context, record string) <-chan *ipobj.
 				break
 			} else {
 				resChan <- &ipobj.Record{
-					PeerId:  string(rec.From),
+					PeerId:  []byte(rec.From),
 					Content: rec.Val,
 				}
 			}
@@ -101,7 +103,7 @@ func (net *Network) ProvideRecord(ctx context.Context, key string, rec []byte) e
 	return net.client.PutValue(ctx, key, rec)
 }
 
-func (net *Network) GetRecordFrom(ctx context.Context, peerId string, key string) ([]byte, error) {
+func (net *Network) GetRecordFrom(ctx context.Context, peerId []byte, key string) ([]byte, error) {
 	rec, err := net.client.GetValueFromPeer(ctx, peer.ID(peerId), key, false)
 	if err != nil {
 		return nil, err
@@ -109,6 +111,6 @@ func (net *Network) GetRecordFrom(ctx context.Context, peerId string, key string
 	return rec.Val, nil
 }
 
-func (net *Network) UpdatePeerRecord(ctx context.Context, peerId string, key string, record []byte) error {
+func (net *Network) UpdatePeerRecord(ctx context.Context, peerId []byte, key string, record []byte) error {
 	return net.client.PutValueToPeer(ctx, peer.ID(peerId), key, record)
 }
