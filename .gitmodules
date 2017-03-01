@@ -235,3 +235,18 @@
 [submodule "src/github.com/multiformats/multicodec"]
 	path = src/github.com/multiformats/multicodec
 	url = https://github.com/mildred/multicodec.git
+[submodule "src/github.com/whyrusleeping/mdns"]
+	path = src/github.com/whyrusleeping/mdns
+	url = https://github.com/whyrusleeping/mdns.git
+[submodule "src/github.com/miekg/dns"]
+	path = src/github.com/miekg/dns
+	url = https://github.com/miekg/dns.git
+[submodule "src/github.com/ipfs/go-ipld-node"]
+	path = src/github.com/ipfs/go-ipld-node
+	url = https://github.com/ipfs/go-ipld-node.git
+[submodule "src/github.com/ipfs/go-ipld-cbor"]
+	path = src/github.com/ipfs/go-ipld-cbor
+	url = https://github.com/ipfs/go-ipld-cbor.git
+[submodule "src/github.com/whyrusleeping/cbor"]
+	path = src/github.com/whyrusleeping/cbor
+	url = https://github.com/whyrusleeping/cbor.git

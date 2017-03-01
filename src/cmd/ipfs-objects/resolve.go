@@ -14,7 +14,7 @@ import (
 	ic "github.com/libp2p/go-libp2p-crypto"
 )
 
-func resolve(args []string) error {
+func resolve(cfg Config, args []string) error {
 	var f flag.FlagSet
 	var keyfile string
 	var timeout time.Duration
@@ -32,6 +32,10 @@ func resolve(args []string) error {
 
 	config := ipfs_objects.NetworkConfig{
 		ClientOnly: true,
+	}
+	config.ListenAddresses, err = cfg.ListenAddrs.Get()
+	if err != nil {
+		return err
 	}
 
 	net, err := ipfs_objects.NewNetwork(context.Background(), config, ipobj.NullPeer, sk)

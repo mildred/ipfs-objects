@@ -5,6 +5,8 @@ ipfs-objects: always
 
 gx-undo:
 	cd src/github.com/ipfs/go-ipfs; gx-go rewrite --undo
+	cd src/github.com/ipfs/go-ipld-node; gx-go rewrite --undo
+	cd src/github.com/ipfs/go-ipld-cbor; gx-go rewrite --undo
 
 always:
 .PHONY: always

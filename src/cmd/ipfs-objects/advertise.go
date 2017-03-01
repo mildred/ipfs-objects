@@ -24,7 +24,7 @@ func (ap *advertisePeer) GetRecord(key string) ([]byte, error) {
 
 func (ap *advertisePeer) NewRecord(key string, value []byte, peer []byte) {}
 
-func advertise(args []string) error {
+func advertise(cfg Config, args []string) error {
 	var f flag.FlagSet
 	var keyfile string
 	var interval time.Duration
@@ -49,6 +49,10 @@ func advertise(args []string) error {
 	}
 
 	var config ipfs_objects.NetworkConfig
+	config.ListenAddresses, err = cfg.ListenAddrs.Get()
+	if err != nil {
+		return err
+	}
 	net, err := ipfs_objects.NewNetwork(context.Background(), config, peer, sk)
 	if err != nil {
 		return err

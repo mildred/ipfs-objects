@@ -18,27 +18,31 @@ import (
 )
 
 func main() {
-	var err error
+	var f flag.FlagSet
 	var debug bool
-	flag.BoolVar(&debug, "debug", false, "debug logging")
-	flag.Parse()
+	var cfg Config
+	cfg.Flags(&f)
+	f.BoolVar(&debug, "debug", false, "debug logging")
+	f.Parse(os.Args[1:])
+
+	var err error
 
 	if debug {
 		log.SetDebugLogging()
 	}
 
-	switch flag.Arg(0) {
+	switch f.Arg(0) {
 	case "keygen":
-		err = keygen(flag.Args())
+		err = keygen(f.Args())
 		break
 	case "resolve":
-		err = resolve(flag.Args())
+		err = resolve(cfg, f.Args())
 		break
 	case "advertise":
-		err = advertise(flag.Args())
+		err = advertise(cfg, f.Args())
 		break
 	default:
-		err = fmt.Errorf("Please specify a valid command")
+		err = fmt.Errorf("Please specify a valid command: %s invalid", f.Arg(0))
 		fallthrough
 	case "help":
 		fmt.Println("Available commands:")

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"ipobj"
+	"log"
 	"net"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	exchange "github.com/ipfs/go-ipfs/exchange"
@@ -13,6 +15,7 @@ import (
 	smux "github.com/jbenet/go-stream-muxer"
 	ic "github.com/libp2p/go-libp2p-crypto"
 	p2phost "github.com/libp2p/go-libp2p-host"
+	hostbootstrap "github.com/libp2p/go-libp2p-host-bootstrap"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	metrics "github.com/libp2p/go-libp2p-metrics"
 	ipfs_peer "github.com/libp2p/go-libp2p-peer"
@@ -20,10 +23,14 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	routing "github.com/libp2p/go-libp2p-routing"
 	swarm "github.com/libp2p/go-libp2p-swarm"
+	discovery "github.com/libp2p/go-libp2p/p2p/discovery"
 	p2pbhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 	ipfs_rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
+	ma "github.com/multiformats/go-multiaddr"
 	mamask "github.com/whyrusleeping/multiaddr-filter"
 )
+
+const discoveryConnTimeout = time.Second * 30
 
 var _ ipobj.Network = &Network{}
 
@@ -49,6 +56,9 @@ type Network struct {
 	// exchange interface
 
 	store *PeerBlockstore
+
+	ctx      context.Context
+	peerHost p2phost.Host
 }
 
 func parseAddrs(addrs []string) ([]*net.IPNet, error) {
@@ -64,9 +74,11 @@ func parseAddrs(addrs []string) ([]*net.IPNet, error) {
 }
 
 type NetworkConfig struct {
-	ClientOnly    bool
-	RudeBitswap   bool
-	DialBlockList []string
+	ClientOnly      bool
+	RudeBitswap     bool
+	DialBlockList   []string
+	ListenAddresses []ma.Multiaddr
+	MDSNInterval    time.Duration
 }
 
 // isolates the complex initialization steps
@@ -143,6 +155,50 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 		exchange: exchange,
 		store:    blockstore,
 		id:       id,
+		ctx:      ctx,
+		peerHost: peerHost,
 	}
+
+	// Start listening
+	log.Printf("Listening at: %s", config.ListenAddresses)
+	err = host.Network().Listen(config.ListenAddresses...)
+	if err != nil {
+		return nil, err
+	}
+
+	// list out our addresses
+	addrs, err := host.Network().InterfaceListenAddresses()
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Swarm listening at: %s", addrs)
+
+	// MDNS
+	interval := config.MDSNInterval
+	if interval == 0 {
+		interval = time.Duration(5) * time.Second
+	}
+	service, err := discovery.NewMdnsService(ctx, peerHost, interval)
+	if err != nil {
+		return nil, err
+	}
+	service.RegisterNotifee(net) // TODO
+
+	// Bootstrap Host
+	bootstrapCtx := ctx
+	hostbootstrap.Bootstrap(bootstrapCtx, peerHost, id, hostbootstrap.DefaultBootstrapConfig)
+	// Bootstrap DHT
+	if err := net.client.Bootstrap(bootstrapCtx); err != nil {
+		return nil, err
+	}
+
 	return net, nil
+}
+
+func (net *Network) HandlePeerFound(p pstore.PeerInfo) {
+	ctx, cancel := context.WithTimeout(net.ctx, discoveryConnTimeout)
+	defer cancel()
+	if err := net.peerHost.Connect(ctx, p); err != nil {
+		log.Printf("Failed to connect to peer found by discovery: ", err)
+	}
 }
