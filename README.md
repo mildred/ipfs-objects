@@ -1,3 +1,26 @@
+Build
+=====
+
+- clone recursive
+- `make gx-undo`
+- `make gx`
+
+
+Use
+===
+
+Prepare the server key:
+
+    ./ipfs-objects keygen -o advertise.key
+
+On one terminal, advertise for a record:
+
+    ./ipfs-objects advertise -k advertise.key -t 1m /hello/world " test "
+
+On another terminal, ask for the record:
+
+    ./ipfs-objects -listen /ip4/0.0.0.0/tcp/5000 resolve /hello world
+
 
 TODO
 ====
