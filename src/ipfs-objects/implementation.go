@@ -160,18 +160,10 @@ func NewNetwork(ctx context.Context, config NetworkConfig, peerObj ipobj.Peer, s
 	}
 
 	// Start listening
-	log.Printf("Listening at: %s", config.ListenAddresses)
 	err = host.Network().Listen(config.ListenAddresses...)
 	if err != nil {
 		return nil, err
 	}
-
-	// list out our addresses
-	addrs, err := host.Network().InterfaceListenAddresses()
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Swarm listening at: %s", addrs)
 
 	// MDNS
 	interval := config.MDSNInterval
@@ -201,4 +193,8 @@ func (net *Network) HandlePeerFound(p pstore.PeerInfo) {
 	if err := net.peerHost.Connect(ctx, p); err != nil {
 		log.Printf("Failed to connect to peer found by discovery: ", err)
 	}
+}
+
+func (net *Network) InterfaceListenAddresses() ([]ma.Multiaddr, error) {
+	return net.peerHost.Network().InterfaceListenAddresses()
 }

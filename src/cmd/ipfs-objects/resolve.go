@@ -12,6 +12,7 @@ import (
 
 	base58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 func resolve(cfg Config, args []string) error {
@@ -44,6 +45,15 @@ func resolve(cfg Config, args []string) error {
 	}
 
 	fmt.Printf("Peer id: %s\n", base58.Encode(net.Id()))
+	// list out our addresses
+	addrs, err := net.InterfaceListenAddresses()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Swarm listening at:\n")
+	for _, a := range addrs {
+		fmt.Printf("  - %s\n", a)
+	}
 
 	ctx := contextWithSignal(context.Background())
 	var wg sync.WaitGroup
@@ -72,27 +82,28 @@ func resolve(cfg Config, args []string) error {
 
 		loop:
 			for {
-				var pl []ipobj.PeerInfo
+				var p *ipobj.PeerInfo
 				select {
 				case <-ctx.Done():
 					break loop
-				case pl = <-peers:
-					if pl == nil {
+				case p = <-peers:
+					if p == nil {
 						fmt.Printf("%s: no provider\n", record)
 						break loop
 					}
 					break
 				}
 
-				for _, p := range pl {
-					fmt.Printf("%s: possible provider: %s %#v\n", record, base58.Encode(p.Id), p)
-					data, err := net.GetRecordFrom(ctx, p.Id, record)
-					if err != nil {
-						fmt.Printf("%s: error from %s: %v\n", record, base58.Encode(p.Id), err)
-						continue
-					}
-					fmt.Printf("%s: response from: %v\n\t%v\n", record, base58.Encode(p.Id), data)
+				fmt.Printf("%s: possible provider: %s\n", record, base58.Encode(p.Id))
+				for _, a := range p.Addrs {
+					fmt.Printf("  - %v\n", ma.Cast(a))
 				}
+				data, err := net.GetRecordFrom(ctx, p.Id, record)
+				if err != nil {
+					fmt.Printf("%s: error from %s: %v\n", record, base58.Encode(p.Id), err)
+					continue
+				}
+				fmt.Printf("%s: response from: %v\n\t%v\n", record, base58.Encode(p.Id), data)
 			}
 		}(record)
 	}

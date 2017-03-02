@@ -59,6 +59,15 @@ func advertise(cfg Config, args []string) error {
 	}
 
 	fmt.Printf("Peer id: %s\n", base58.Encode(net.Id()))
+	// list out our addresses
+	addrs, err := net.InterfaceListenAddresses()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Swarm listening at:\n")
+	for _, a := range addrs {
+		fmt.Printf("  - %s\n", a)
+	}
 
 	ctx := contextWithSignal(context.Background())
 

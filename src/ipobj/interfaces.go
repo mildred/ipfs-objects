@@ -54,7 +54,7 @@ type Network interface {
 
 	// List providers for ObjHash. if updated is true, omit address of providers
 	// that explicitely don't try to maintain the object up to date.
-	Providers(ctx context.Context, obj ObjAddr) (<-chan []PeerInfo, error)
+	Providers(ctx context.Context, obj ObjAddr) (<-chan *PeerInfo, error)
 
 	// Get an object obj
 	GetObject(ctx context.Context, obj ObjAddr) (io.Reader, error)

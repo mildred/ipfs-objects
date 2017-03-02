@@ -16,14 +16,14 @@ func (net *Network) Id() []byte {
 	return []byte(net.id)
 }
 
-func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan []ipobj.PeerInfo, error) {
+func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan *ipobj.PeerInfo, error) {
 	contentid, err := cid.Cast(obj)
 	if err != nil {
 		return nil, err
 	}
 	size := 4
-	res := make(chan []ipobj.PeerInfo, 0)
-	respond := func(info []ipobj.PeerInfo) (cont bool) {
+	res := make(chan *ipobj.PeerInfo, 0)
+	respond := func(info *ipobj.PeerInfo) (cont bool) {
 		cont = false
 		defer recover()
 		res <- info
@@ -41,9 +41,11 @@ func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan []
 				if len(peer.ID) > 0 {
 					peers = append(peers, decodePeerInfo(peer))
 				}
-				if !respond(peers) {
-					cancel()
-					return
+				for _, p := range peers {
+					if !respond(&p) {
+						cancel()
+						return
+					}
 				}
 			}
 			size = size * 2
