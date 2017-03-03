@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 	"ipobj"
-	"log"
+	"sync"
 
 	cid "github.com/ipfs/go-cid"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -18,12 +18,27 @@ func (net *Network) Id() []byte {
 }
 
 func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan *ipobj.PeerInfo, error) {
+	var lock sync.Mutex
+	plist := map[string]bool{}
+
 	contentid, err := cid.Cast(obj)
 	if err != nil {
 		return nil, err
 	}
 	size := 4
 	res := make(chan *ipobj.PeerInfo, 0)
+
+	sendPeer := func(peerId []byte) bool {
+		lock.Lock()
+		defer lock.Unlock()
+		if plist[string(peerId)] {
+			return false
+		} else {
+			plist[string(peerId)] = true
+			return true
+		}
+	}
+
 	respond := func(info *ipobj.PeerInfo) (cont bool) {
 		cont = false
 		defer recover()
@@ -31,6 +46,7 @@ func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan *i
 		cont = true
 		return
 	}
+
 	go func() {
 		for {
 			ctx2, cancel := context.WithCancel(ctx)
@@ -43,8 +59,7 @@ func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan *i
 					peers = append(peers, decodePeerInfo(peer))
 				}
 				for _, p := range peers {
-					log.Printf("peer: %#v", p)
-					if !respond(&p) {
+					if sendPeer(p.Id) && !respond(&p) {
 						cancel()
 						return
 					}
