@@ -1,4 +1,4 @@
-package ipfs_objects
+package net
 
 import (
 	"context"

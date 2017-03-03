@@ -1,9 +1,10 @@
-package ipfs_objects
+package net
 
 import (
 	"context"
 	"io"
 	"ipobj"
+	"log"
 
 	cid "github.com/ipfs/go-cid"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -42,6 +43,7 @@ func (net *Network) Providers(ctx context.Context, obj ipobj.ObjAddr) (<-chan *i
 					peers = append(peers, decodePeerInfo(peer))
 				}
 				for _, p := range peers {
+					log.Printf("peer: %#v", p)
 					if !respond(&p) {
 						cancel()
 						return

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	ipfs_objects "ipfs-objects"
 	"ipobj"
+	ipnet "ipobj-net"
 
 	base58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
@@ -19,10 +19,13 @@ type advertisePeer struct {
 }
 
 func (ap *advertisePeer) GetRecord(key string) ([]byte, error) {
+	fmt.Printf("GetRecord %s\n", key)
 	return ap.values[key], nil
 }
 
-func (ap *advertisePeer) NewRecord(key string, value []byte, peer []byte) {}
+func (ap *advertisePeer) NewRecord(key string, value []byte, peer []byte) {
+	fmt.Printf("NewRecord %s\n", key)
+}
 
 func advertise(cfg Config, args []string) error {
 	var f flag.FlagSet
@@ -48,12 +51,12 @@ func advertise(cfg Config, args []string) error {
 		recordKey: recordData,
 	}
 
-	var config ipfs_objects.NetworkConfig
+	var config ipnet.NetworkConfig
 	config.ListenAddresses, err = cfg.ListenAddrs.Get()
 	if err != nil {
 		return err
 	}
-	net, err := ipfs_objects.NewNetwork(context.Background(), config, peer, sk)
+	net, err := ipnet.NewNetwork(context.Background(), config, peer, sk)
 	if err != nil {
 		return err
 	}

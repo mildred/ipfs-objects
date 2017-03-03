@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	ipfs_objects "ipfs-objects"
 	"ipobj"
+	ipnet "ipobj-net"
 
 	base58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
@@ -31,7 +31,7 @@ func resolve(cfg Config, args []string) error {
 		sk, err = readKeyFile(keyfile)
 	}
 
-	config := ipfs_objects.NetworkConfig{
+	config := ipnet.NetworkConfig{
 		ClientOnly: true,
 	}
 	config.ListenAddresses, err = cfg.ListenAddrs.Get()
@@ -39,7 +39,7 @@ func resolve(cfg Config, args []string) error {
 		return err
 	}
 
-	net, err := ipfs_objects.NewNetwork(context.Background(), config, ipobj.NullPeer, sk)
+	net, err := ipnet.NewNetwork(context.Background(), config, ipobj.NullPeer, sk)
 	if err != nil {
 		return err
 	}

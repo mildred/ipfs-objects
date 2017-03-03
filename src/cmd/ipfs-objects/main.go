@@ -10,8 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	ipfs_objects "ipfs-objects"
 	"ipobj"
+	ipnet "ipobj-net"
 
 	"github.com/ipfs/go-log"
 	ic "github.com/libp2p/go-libp2p-crypto"
@@ -89,11 +89,11 @@ func daemon(args []string) error {
 
 	sk, err := readKeyFile(keyfile)
 
-	var config ipfs_objects.NetworkConfig
+	var config ipnet.NetworkConfig
 	var net ipobj.Network
 	var client ipobj.Peer
 
-	net, err = ipfs_objects.NewNetwork(context.Background(), config, client, sk)
+	net, err = ipnet.NewNetwork(context.Background(), config, client, sk)
 	if err != nil {
 		return err
 	}
