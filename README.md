@@ -3,7 +3,7 @@ Build
 
 - clone recursive
 - `make gx-undo`
-- `make gx`
+- `make`
 
 
 Use
