@@ -250,3 +250,6 @@
 [submodule "src/github.com/whyrusleeping/cbor"]
 	path = src/github.com/whyrusleeping/cbor
 	url = https://github.com/whyrusleeping/cbor.git
+[submodule "src/github.com/multiformats/go-multicodec"]
+	path = src/github.com/multiformats/go-multicodec
+	url = https://github.com/multiformats/go-multicodec.git

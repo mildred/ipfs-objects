@@ -41,6 +41,9 @@ func main() {
 	case "advertise":
 		err = advertise(cfg, f.Args())
 		break
+	case "gen-osr":
+		err = genosr(f.Args())
+		break
 	default:
 		err = fmt.Errorf("Please specify a valid command: %s invalid", f.Arg(0))
 		fallthrough
@@ -50,6 +53,7 @@ func main() {
 		fmt.Println("\tkeygen    - generate secret key")
 		fmt.Println("\tresolve   - resolve naming record to root block")
 		fmt.Println("\tadvertise - advertise naming record to root block")
+		fmt.Println("\tgen-osr   - generate OSR record")
 		break
 	}
 
