@@ -4,10 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"ipobj"
 	ipnet "ipobj-net"
+	osr "ipobj-osr"
 
 	base58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
@@ -43,8 +45,24 @@ func advertise(cfg Config, args []string) error {
 		sk, err = readKeyFile(keyfile)
 	}
 
-	recordKey := f.Arg(0)
-	recordData := []byte(f.Arg(1))
+	recordFile := f.Arg(0)
+	recordKey := f.Arg(1)
+
+	recordData, err := ioutil.ReadFile(recordFile)
+	if err != nil {
+		return err
+	}
+
+	if recordKey == "" {
+		rec, err := osr.Decode(recordData)
+		if err != nil {
+			return err
+		}
+		recordKey, err = rec.Path()
+		if err != nil {
+			return err
+		}
+	}
 
 	var peer *advertisePeer = new(advertisePeer)
 	peer.values = map[string][]byte{
@@ -71,6 +89,8 @@ func advertise(cfg Config, args []string) error {
 	for _, a := range addrs {
 		fmt.Printf("  - %s\n", a)
 	}
+
+	fmt.Printf("Advertise: %s\n", recordKey)
 
 	ctx := contextWithSignal(context.Background())
 

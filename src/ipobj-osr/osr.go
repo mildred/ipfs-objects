@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	_ "github.com/jbenet/go-base58"
+	b58 "github.com/jbenet/go-base58"
 	ic "github.com/libp2p/go-libp2p-crypto"
 	"github.com/multiformats/go-multicodec"
 )
@@ -15,6 +15,7 @@ type Record struct {
 	CID       string `json:"cid"`
 	Order     uint64 `json:"ord"`
 	PublicKey string `json:"pkey"`
+	Salt      string `json:"salt"`
 }
 
 type signedRecord struct {
@@ -32,7 +33,7 @@ func Decode(rec []byte) (*Record, error) {
 		rec = rec[len(HeaderOSR):]
 	}
 	if bytes.HasPrefix(rec, HeaderJSON) {
-		rec = rec[len(HeaderOSR):]
+		rec = rec[len(HeaderJSON):]
 	}
 
 	var sr signedRecord
@@ -71,6 +72,35 @@ func Decode(rec []byte) (*Record, error) {
 	}
 
 	return &ur, nil
+}
+
+func Path(salt string, pk ic.PubKey) (string, error) {
+	data, err := pk.Hash()
+	if err != nil {
+		return "", err
+	}
+	if salt != "" {
+		salt = "/" + salt
+	}
+	return "/osr/" + b58.Encode(data) + salt, nil
+}
+
+func (r *Record) Path() (string, error) {
+	pk, err := r.GetPublicKey()
+	if err != nil {
+		return "", err
+	}
+
+	return Path(r.Salt, pk)
+}
+
+func (r *Record) GetPublicKey() (ic.PubKey, error) {
+	pkd, err := base64.RawStdEncoding.DecodeString(r.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return ic.UnmarshalPublicKey(pkd)
 }
 
 func (r *Record) Encode(sk ic.PrivKey) ([]byte, error) {
