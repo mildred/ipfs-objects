@@ -62,6 +62,7 @@ func advertise(cfg Config, args []string) error {
 		if err != nil {
 			return err
 		}
+		recordKey = "/iprs" + recordKey
 	}
 
 	var peer *advertisePeer = new(advertisePeer)

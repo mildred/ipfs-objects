@@ -9,17 +9,24 @@ Build
 Use
 ===
 
-Prepare the server key:
+Prepare the client, server and record keys:
 
-    ./ipfs-objects keygen -o advertise.key
+    ./ipfs-objects keygen -o record.key
+    ./ipfs-objects keygen -o client.key
+    ./ipfs-objects keygen -o server.key
 
-On one terminal, advertise for a record:
+Generate the OSR record:
 
-    ./ipfs-objects advertise -k advertise.key -t 1m /hello/world " test "
+    ./ipfs-objects gen-osr -o test.osr -k record.key TEST
 
-On another terminal, ask for the record:
+On one terminal, advertise for the record:
 
-    ./ipfs-objects -listen /ip4/0.0.0.0/tcp/5000 resolve /hello world
+    ./ipfs-objects advertise -k server.key -t 1m test.osr
+
+Remember the record key starting with `/iprs/osr` and usr it for the next
+command.  On another terminal, ask for the record:
+
+    ./ipfs-objects -listen /ip4/0.0.0.0/tcp/5000 resolve -k client.key /iprs/osr/...
 
 
 TODO
