@@ -17,14 +17,26 @@ Prepare the client, server and record keys:
 
 Generate the OSR record:
 
-    ./ipfs-objects gen-osr -o test.osr -k record.key TEST
+    ./ipfs-objects gen-osr -o test1.osr -k record.key TEST
 
 On one terminal, advertise for the record:
 
-    ./ipfs-objects advertise -k server.key -t 1m test.osr
+    ./ipfs-objects advertise -k server.key -t 1m test1.osr
 
 Remember the record key starting with `/iprs/osr` and usr it for the next
-command.  On another terminal, ask for the record:
+command.  On another terminal, ask for the record (Ctrl-C to stop):
+
+    ./ipfs-objects -listen /ip4/0.0.0.0/tcp/5000 resolve -k client.key /iprs/osr/...
+
+Generate a new version of the record:
+
+    ./ipfs-objects gen-osr -o test2.osr -k record.key TEST
+
+Update the record on outdated peers (Ctrl-C to stop):
+
+    ./ipfs-objects -listen /ip4/0.0.0.0/tcp/5000 update -k client.key test2.osr
+
+Check the new record is available (Ctrl-C to stop):
 
     ./ipfs-objects -listen /ip4/0.0.0.0/tcp/5000 resolve -k client.key /iprs/osr/...
 

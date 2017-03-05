@@ -41,6 +41,9 @@ func main() {
 	case "advertise":
 		err = advertise(cfg, f.Args())
 		break
+	case "update":
+		err = update(cfg, f.Args())
+		break
 	case "gen-osr":
 		err = genosr(f.Args())
 		break
@@ -53,6 +56,7 @@ func main() {
 		fmt.Println("\tkeygen    - generate secret key")
 		fmt.Println("\tresolve   - resolve naming record to root block")
 		fmt.Println("\tadvertise - advertise naming record to root block")
+		fmt.Println("\tupdate    - update peers with outdated records")
 		fmt.Println("\tgen-osr   - generate OSR record")
 		break
 	}

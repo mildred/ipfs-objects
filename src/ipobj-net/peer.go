@@ -24,7 +24,7 @@ func (pr *PeerRecord) GetRecord(key string) ([]byte, error) {
 
 func (pr *PeerRecord) NewRecord(key string, value []byte, p peer.ID) bool {
 	pr.peer.NewRecord(key, value, []byte(p))
-	return true
+	return false
 }
 
 type PeerBlockstore struct {
@@ -53,7 +53,7 @@ func (pb *PeerBlockstore) Get(id *ipfs_cid.Cid) (ipfs_blocks.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	bytes, err := readerToBytes(reader)
+	bytes, err := ipobj.ReaderToBytes(reader)
 	if err != nil {
 		return nil, err
 	}

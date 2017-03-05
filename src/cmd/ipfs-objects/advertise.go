@@ -26,7 +26,42 @@ func (ap *advertisePeer) GetRecord(key string) ([]byte, error) {
 }
 
 func (ap *advertisePeer) NewRecord(key string, value []byte, peer []byte) {
-	fmt.Printf("NewRecord %s\n", key)
+	newRec, err := osr.Decode(value)
+	if err != nil {
+		fmt.Printf("%s: new record from %s: decode error %s", key, base58.Encode(peer), err)
+		return
+	}
+
+	newKey, err := newRec.Path()
+	if err != nil {
+		fmt.Printf("%s: new record from %s: path error %s", key, base58.Encode(peer), err)
+		return
+	}
+	if "/iprs"+newKey != key {
+		fmt.Printf("%s: new record from %s: mismatching path /iprs%s", key, base58.Encode(peer), newKey)
+		return
+	}
+
+	recData, hasRec := ap.values[key]
+	if !hasRec {
+		fmt.Printf("%s: new record from %s\n", key, base58.Encode(peer))
+		return
+	}
+
+	rec, err := osr.Decode(recData)
+	if err != nil {
+		fmt.Printf("%s: decode OSR error: %s", key, err)
+		return
+	}
+
+	if newRec.Order == rec.Order {
+		fmt.Printf("%s: same record from %s\n", key, base58.Encode(peer))
+	} else if newRec.Order < rec.Order {
+		fmt.Printf("%s: old record from %s (%d)\n", key, base58.Encode(peer), newRec.Order)
+	} else {
+		fmt.Printf("%s: newer record from %s (%d)\n", key, base58.Encode(peer), newRec.Order)
+		ap.values[key] = value
+	}
 }
 
 func advertise(cfg Config, args []string) error {

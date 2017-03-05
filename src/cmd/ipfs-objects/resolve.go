@@ -73,7 +73,7 @@ func resolve(cfg Config, args []string) error {
 			defer cancel()
 
 			cid := ipobj.NewRecordObjAddr(record)
-			fmt.Printf("Request CID: %s\n", base58.Encode(cid))
+			fmt.Printf("Record:     %s\nRecord CID: %s\n", record, base58.Encode(cid))
 			peers, err := net.Providers(ctx2, cid)
 			if err != nil {
 				fmt.Printf("%s: error: %v\n", record, err)
@@ -103,7 +103,7 @@ func resolve(cfg Config, args []string) error {
 					fmt.Printf("%s: error from %s: %v\n", record, base58.Encode(p.Id), err)
 					continue
 				}
-				fmt.Printf("%s: response from: %v\n\t%v\n", record, base58.Encode(p.Id), data)
+				fmt.Printf("%s: response from: %v\n\t%v\n", record, base58.Encode(p.Id), string(data))
 			}
 		}(record)
 	}

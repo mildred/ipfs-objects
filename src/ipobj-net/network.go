@@ -3,8 +3,9 @@ package net
 import (
 	"context"
 	"io"
-	"ipobj"
 	"sync"
+
+	"ipobj"
 
 	cid "github.com/ipfs/go-cid"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -81,7 +82,7 @@ func (net *Network) GetObject(ctx context.Context, obj ipobj.ObjAddr) (io.Reader
 		return nil, err
 	}
 
-	return bytesToReader(block.RawData()), nil
+	return ipobj.BytesToReader(block.RawData()), nil
 }
 
 func (net *Network) GetRecord(ctx context.Context, record string) <-chan *ipobj.Record {
