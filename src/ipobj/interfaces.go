@@ -21,15 +21,15 @@ const RecordCidCode = 0x0220
 const RecordMultihashCode = 0x00
 
 func NewRecordCid(key string) *cid.Cid {
-	return cid.NewCidV1(RecordCidCode, []byte(key))
-}
-
-func NewRecordObjAddr(key string) ObjAddr {
 	h, e := mh.Encode([]byte(key), RecordMultihashCode)
 	if e != nil {
 		panic(e)
 	}
-	return ObjAddr(cid.NewCidV1(RecordCidCode, h).Bytes())
+	return cid.NewCidV1(RecordCidCode, h)
+}
+
+func NewRecordObjAddr(key string) ObjAddr {
+	return ObjAddr(NewRecordCid(key).Bytes())
 }
 
 type ObjAddr []byte
